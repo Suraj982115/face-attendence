@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Attendance</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { margin-bottom: 20px; }
+        .container { display: flex; gap: 30px; align-items: flex-start; }
+        .video-box { flex: 1; }
+        .video-box img { width: 100%; max-width: 640px; border: 2px solid #333; }
+        .status-box { width: 300px; }
+        .status-box h2 { margin-bottom: 10px; }
+        #status-list { list-style: none; padding: 0; max-height: 500px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; }
+        #status-list li { padding: 6px 0; border-bottom: 1px solid #eee; }
+        .matched { color: green; font-weight: bold; }
+        .unmatched { color: red; font-weight: bold; }
+        a { display: inline-block; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <h1>Live Attendance Camera</h1>
+    <a href="/admin">Back to Dashboard</a>
+    <div class="container">
+        <div class="video-box">
+            <h2>Live Feed</h2>
+            <img src="/video_feed" alt="Live camera feed">
+        </div>
+        <div class="status-box">
+            <h2>Detected Students</h2>
+            <ul id="status-list"></ul>
+        </div>
+    </div>
+
+    <script>
+        function refreshStatus() {
+            fetch("/live_status")
+                .then(function(resp) { return resp.json(); })
+                .then(function(data) {
+                    var list = document.getElementById("status-list");
+                    list.innerHTML = "";
+                    data.forEach(function(entry) {
+                        var li = document.createElement("li");
+                        if (entry.marked) {
+                            li.innerHTML = "&#10004; <span class='matched'>" + entry.name + "</span> — attendance marked";
+                        } else {
+                            li.innerHTML = "&#10008; <span class='unmatched'>" + entry.name + "</span> — not marked";
+                        }
+                        list.appendChild(li);
+                    });
+                });
+        }
+
+        setInterval(refreshStatus, 2000);
+        refreshStatus();
+    </script>
+</body>
+</html>

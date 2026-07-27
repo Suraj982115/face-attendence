@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+</head>
+<body>
+    <h1>Admin Dashboard</h1>
+    <p><a href="/admin/add">+ Add New Student</a></p>
+    <p><a href="/logout">Logout</a></p>
+    <hr>
+    {% if error %}
+    <p style="color:red;">{{ error }}</p>
+    {% endif %}
+    {% if students %}
+    <table border="1" cellpadding="8" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Photo</th>
+                <th>Name</th>
+                <th>Roll Number</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in students %}
+            <tr>
+                <td>
+                    {% if s.photo_url %}
+                    <img src="{{ s.photo_url }}" alt="{{ s.name }}" width="60" height="60" style="object-fit:cover;">
+                    {% else %}
+                    No photo
+                    {% endif %}
+                </td>
+                <td>{{ s.name }}</td>
+                <td>{{ s.roll_number }}</td>
+                <td>
+                    <a href="/admin/edit/{{ s.id }}">Edit</a>
+                    <form action="/admin/remove/{{ s.id }}" method="POST" style="display:inline;" onsubmit="return confirm('Remove this student?');">
+                        <button type="submit">Remove</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No students enrolled yet.</p>
+    {% endif %}
+</body>
+</html>

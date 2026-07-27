@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Student</title>
+</head>
+<body>
+    <h1>Edit Student</h1>
+    <p><a href="/admin">Back to Dashboard</a></p>
+    <hr>
+    {% if error %}
+    <p style="color:red;">{{ error }}</p>
+    {% endif %}
+    <form method="POST" action="/admin/edit/{{ student[0] }}" enctype="multipart/form-data">
+        <label>Name:</label><br>
+        <input type="text" name="name" value="{{ student[1] }}" required><br><br>
+        <label>Roll Number:</label><br>
+        <input type="text" name="roll_number" value="{{ student[2] }}" required><br><br>
+        <label>Replace Photo (optional):</label><br>
+        <input type="file" name="photo" accept="image/*"><br><br>
+        <button type="submit">Update Student</button>
+    </form>
+</body>
+</html>
