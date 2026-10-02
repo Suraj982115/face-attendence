@@ -3,94 +3,303 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance Register</title>
+    <title>Attendance Register | Student Attendance</title>
     <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --text: #0f172a;
+            --muted: #64748b;
+            --border: #e2e8f0;
+            --bg: #f1f5f9;
+            --present-bg: #dcfce7;
+            --present-text: #15803d;
+            --absent-bg: #fee2e2;
+            --absent-text: #b91c1c;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
-        h1 { margin-bottom: 10px; color: #333; }
-        a { color: #1976d2; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        .nav { margin-bottom: 20px; }
-        .controls { margin-bottom: 20px; background: #fff; padding: 16px; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-        .controls label { font-weight: 600; color: #555; }
-        .controls select { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
-        .controls button { padding: 6px 16px; background: #1976d2; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
-        .controls button:hover { background: #1565c0; }
-        .register-wrap { overflow-x: auto; background: #fff; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
-        table { border-collapse: collapse; width: 100%; min-width: 800px; }
-        th, td { border: 1px solid #ddd; padding: 8px 6px; text-align: center; font-size: 13px; }
-        th { background: #f0f0f0; font-weight: 700; color: #333; position: sticky; top: 0; }
-        th.name-col { text-align: left; min-width: 160px; }
-        td.name-col { text-align: left; font-weight: 600; background: #fafafa; }
-        td.present { background: #c8e6c9; color: #2e7d32; font-weight: 700; }
-        td.absent { background: #ffcdd2; color: #c62828; font-weight: 700; }
-        td.total-row { background: #e3f2fd; font-weight: 700; color: #1565c0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ---------- Top navigation ---------- */
+        .topbar { background: #1e3a8a; padding: 0 24px; }
+
+        .topbar-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            min-height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .brand { color: #fff; font-size: 17px; font-weight: 700; letter-spacing: -0.2px; }
+
+        .nav { display: flex; flex-wrap: wrap; gap: 4px; }
+
+        .nav a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 14px;
+            border-radius: 6px;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .nav a:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+        .nav a.active { background: rgba(255, 255, 255, 0.18); color: #fff; }
+
+        /* ---------- Layout ---------- */
+        .container { max-width: 1400px; margin: 28px auto; padding: 0 20px; }
+
+        .page-title { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+        .page-sub { margin-top: 4px; margin-bottom: 20px; font-size: 14px; color: var(--muted); }
+
+        .panel {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+            overflow: hidden;
+        }
+
+        /* ---------- Filter controls ---------- */
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .controls form { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+
+        .controls label { font-size: 13px; font-weight: 600; color: #334155; }
+
+        .controls select {
+            padding: 9px 12px;
+            font-size: 14px;
+            color: var(--text);
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .controls select:focus {
+            background: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+        }
+
+        .controls button {
+            padding: 9px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            background: var(--primary);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .controls button:hover { background: var(--primary-dark); }
+
+        .legend { display: flex; align-items: center; gap: 14px; font-size: 12px; color: var(--muted); }
+        .legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+        .dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .dot.p { background: var(--present-bg); border: 1px solid #86efac; }
+        .dot.a { background: var(--absent-bg); border: 1px solid #fca5a5; }
+
+        /* ---------- Register table ---------- */
+        .register-wrap { overflow: auto; max-height: 70vh; }
+
+        table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 800px; }
+
+        th, td {
+            padding: 10px 6px;
+            text-align: center;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+        }
+
+        thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: #f8fafc;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        /* Sticky first two columns */
+        .name-col {
+            position: sticky;
+            left: 0;
+            z-index: 1;
+            min-width: 170px;
+            text-align: left;
+            padding-left: 20px;
+            background: #fff;
+        }
+
+        .roll-col {
+            position: sticky;
+            left: 170px;
+            z-index: 1;
+            min-width: 90px;
+            background: #fff;
+            box-shadow: 2px 0 4px rgba(15, 23, 42, 0.05);
+        }
+
+        thead th.name-col, thead th.roll-col { background: #f8fafc; z-index: 3; }
+
+        td.name-col { font-weight: 600; }
+
+        .roll {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 12px;
+            background: #f1f5f9;
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+
+        td.present { background: var(--present-bg); color: var(--present-text); font-weight: 700; }
+        td.absent { background: var(--absent-bg); color: var(--absent-text); font-weight: 700; }
+
+        tbody tr:hover td.name-col,
+        tbody tr:hover td.roll-col { background: #f1f5f9; }
+
+        tr.total-row td {
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-weight: 700;
+            border-top: 2px solid #bfdbfe;
+            border-bottom: none;
+        }
+
+        tr.total-row td.name-col,
+        tr.total-row td.roll-col { background: #eff6ff; }
+
         tr:last-child td { border-bottom: none; }
-        .empty { padding: 40px; text-align: center; color: #888; }
+        th:last-child, td:last-child { border-right: none; }
+
+        .empty { text-align: center; padding: 56px 24px; }
+        .empty h3 { font-size: 18px; margin-bottom: 6px; }
+        .empty p { font-size: 14px; color: var(--muted); }
+
+        @media (max-width: 600px) {
+            .container { margin: 20px auto; }
+        }
     </style>
 </head>
 <body>
-    <div class="nav">
-        <a href="/admin">&larr; Back to Dashboard</a>
-    </div>
-    <h1>Attendance Register</h1>
+    {% set months = ["January","February","March","April","May","June","July","August","September","October","November","December"] %}
 
-    <div class="controls">
-        <form method="GET" action="/admin/attendance-register" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-            <label>Month:</label>
-            <select name="month">
-                {% for m in range(1, 13) %}
-                <option value="{{ m }}" {% if m == view_month %}selected{% endif %}>
-                    {{ ["January","February","March","April","May","June","July","August","September","October","November","December"][m-1] }}
-                </option>
-                {% endfor %}
-            </select>
-            <label>Year:</label>
-            <select name="year">
-                {% for y in range(now.year - 5, now.year + 2) %}
-                <option value="{{ y }}" {% if y == view_year %}selected{% endif %}>
-                    {{ y }}
-                </option>
-                {% endfor %}
-            </select>
-            <button type="submit">View Register</button>
-        </form>
-    </div>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <span class="brand">Student Attendance</span>
+            <nav class="nav">
+                <a href="/admin">Dashboard</a>
+                <a href="/admin/attendance-register" class="active">Attendance Register</a>
+                <a href="/admin/live">Live Attendance</a>
+                <a href="/logout">Logout</a>
+            </nav>
+        </div>
+    </header>
 
-    {% if students %}
-    <div class="register-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th class="name-col">Student</th>
-                    <th>Roll</th>
-                    {% for d in range(1, days_in_month + 1) %}
-                    <th>{{ d }}</th>
-                    {% endfor %}
-                </tr>
-            </thead>
-            <tbody>
-                {% for s in students %}
-                <tr>
-                    <td class="name-col">{{ s.name }}</td>
-                    <td>{{ s.roll_number }}</td>
-                    {% for val in grid[loop.index0] %}
-                    <td class="{{ 'present' if val == 1 else 'absent' }}">{{ val }}</td>
-                    {% endfor %}
-                </tr>
-                {% endfor %}
-                <tr>
-                    <td class="name-col" style="font-weight:700;">Total</td>
-                    <td></td>
-                    {% for d in range(1, days_in_month + 1) %}
-                    <td class="total-row">{{ day_totals[d] }}</td>
-                    {% endfor %}
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-    <div class="empty">No students enrolled yet.</div>
-    {% endif %}
+    <main class="container">
+        <h2 class="page-title">Attendance Register</h2>
+        <p class="page-sub">Monthly attendance for {{ months[view_month - 1] }} {{ view_year }}.</p>
+
+        <div class="panel">
+            <div class="controls">
+                <form method="GET" action="/admin/attendance-register">
+                    <label for="month">Month</label>
+                    <select name="month" id="month">
+                        {% for m in range(1, 13) %}
+                        <option value="{{ m }}" {% if m == view_month %}selected{% endif %}>{{ months[m-1] }}</option>
+                        {% endfor %}
+                    </select>
+                    <label for="year">Year</label>
+                    <select name="year" id="year">
+                        {% for y in range(now.year - 5, now.year + 2) %}
+                        <option value="{{ y }}" {% if y == view_year %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit">View Register</button>
+                </form>
+
+                <div class="legend">
+                    <span><i class="dot p"></i> Present</span>
+                    <span><i class="dot a"></i> Absent</span>
+                </div>
+            </div>
+
+            {% if students %}
+            <div class="register-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="name-col">Student</th>
+                            <th class="roll-col">Roll</th>
+                            {% for d in range(1, days_in_month + 1) %}
+                            <th>{{ d }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in students %}
+                        <tr>
+                            <td class="name-col">{{ s.name }}</td>
+                            <td class="roll-col"><span class="roll">{{ s.roll_number }}</span></td>
+                            {% for val in grid[loop.index0] %}
+                            <td class="{{ 'present' if val == 1 else 'absent' }}">{{ '✓' if val == 1 else '✕' }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                        <tr class="total-row">
+                            <td class="name-col">Total Present</td>
+                            <td class="roll-col"></td>
+                            {% for d in range(1, days_in_month + 1) %}
+                            <td>{{ day_totals[d] }}</td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty">
+                <h3>No students enrolled yet</h3>
+                <p>Add students from the dashboard to start building the register.</p>
+            </div>
+            {% endif %}
+        </div>
+    </main>
 </body>
 </html>

@@ -3,52 +3,360 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Attendance</title>
+    <title>Live Attendance | Student Attendance</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h1 { margin-bottom: 20px; }
-        .container { display: flex; gap: 30px; align-items: flex-start; }
-        .video-box { flex: 1; }
-        .video-box img { width: 100%; max-width: 640px; border: 2px solid #333; }
-        .status-box { width: 300px; }
-        .status-box h2 { margin-bottom: 10px; }
-        #status-list { list-style: none; padding: 0; max-height: 500px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; }
-        #status-list li { padding: 6px 0; border-bottom: 1px solid #eee; }
-        .matched { color: green; font-weight: bold; }
-        .unmatched { color: red; font-weight: bold; }
-        a { display: inline-block; margin-top: 15px; }
+        :root {
+            --primary: #2563eb;
+            --text: #0f172a;
+            --muted: #64748b;
+            --border: #e2e8f0;
+            --bg: #f1f5f9;
+            --ok-bg: #dcfce7;
+            --ok-text: #15803d;
+            --warn-bg: #fee2e2;
+            --warn-text: #b91c1c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ---------- Top navigation ---------- */
+        .topbar { background: #1e3a8a; padding: 0 24px; }
+
+        .topbar-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            min-height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .brand { color: #fff; font-size: 17px; font-weight: 700; letter-spacing: -0.2px; }
+
+        .nav { display: flex; flex-wrap: wrap; gap: 4px; }
+
+        .nav a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 14px;
+            border-radius: 6px;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .nav a:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+        .nav a.active { background: rgba(255, 255, 255, 0.18); color: #fff; }
+
+        /* ---------- Layout ---------- */
+        .container { max-width: 1200px; margin: 28px auto; padding: 0 20px; }
+
+        .page-title { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+        .page-sub { margin-top: 4px; margin-bottom: 20px; font-size: 14px; color: var(--muted); }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 340px;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .panel {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+            overflow: hidden;
+        }
+
+        .panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-head h3 { font-size: 15px; font-weight: 700; }
+
+        /* ---------- Video ---------- */
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.6px;
+            color: var(--warn-text);
+            background: var(--warn-bg);
+            padding: 4px 10px;
+            border-radius: 999px;
+        }
+
+        .live-badge::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #dc2626;
+            animation: pulse 1.4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .video-frame {
+            position: relative;
+            background: #0f172a;
+            aspect-ratio: 4 / 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-frame img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+        .video-error {
+            display: none;
+            position: absolute;
+            inset: 0;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 24px;
+            color: #cbd5e1;
+            font-size: 14px;
+        }
+
+        .video-frame.failed img { display: none; }
+        .video-frame.failed .video-error { display: flex; }
+
+        /* ---------- Status list ---------- */
+        .summary {
+            display: flex;
+            gap: 10px;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            background: #f8fafc;
+        }
+
+        .stat {
+            flex: 1;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+        }
+
+        .stat strong { display: block; font-size: 20px; line-height: 1.2; }
+        .stat span { font-size: 12px; color: var(--muted); }
+        .stat.ok strong { color: var(--ok-text); }
+        .stat.warn strong { color: var(--warn-text); }
+
+        #status-list {
+            list-style: none;
+            max-height: 440px;
+            overflow-y: auto;
+        }
+
+        #status-list li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        #status-list li:last-child { border-bottom: none; }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .avatar.matched { background: var(--ok-bg); color: var(--ok-text); }
+        .avatar.unmatched { background: var(--warn-bg); color: var(--warn-text); }
+
+        .person { flex: 1; min-width: 0; }
+        .person .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .badge {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+
+        .badge.matched { background: var(--ok-bg); color: var(--ok-text); }
+        .badge.unmatched { background: var(--warn-bg); color: var(--warn-text); }
+
+        .empty { padding: 40px 20px; text-align: center; font-size: 14px; color: var(--muted); }
+
+        .panel-foot {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            font-size: 12px;
+            color: var(--muted);
+            background: #f8fafc;
+            border-top: 1px solid var(--border);
+        }
+
+        .conn-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; }
+        .conn-dot.offline { background: #dc2626; }
+
+        @media (max-width: 900px) {
+            .layout { grid-template-columns: 1fr; }
+            #status-list { max-height: 320px; }
+        }
     </style>
 </head>
 <body>
-    <h1>Live Attendance Camera</h1>
-    <a href="/admin">Back to Dashboard</a>
-    <div class="container">
-        <div class="video-box">
-            <h2>Live Feed</h2>
-            <img src="/video_feed" alt="Live camera feed">
+    <header class="topbar">
+        <div class="topbar-inner">
+            <span class="brand">Student Attendance</span>
+            <nav class="nav">
+                <a href="/admin">Dashboard</a>
+                <a href="/admin/attendance-register">Attendance Register</a>
+                <a href="/admin/live" class="active">Live Attendance</a>
+                <a href="/logout">Logout</a>
+            </nav>
         </div>
-        <div class="status-box">
-            <h2>Detected Students</h2>
-            <ul id="status-list"></ul>
+    </header>
+
+    <main class="container">
+        <h2 class="page-title">Live Attendance</h2>
+        <p class="page-sub">Students are recognized from the camera feed and marked present automatically.</p>
+
+        <div class="layout">
+            <section class="panel">
+                <div class="panel-head">
+                    <h3>Camera Feed</h3>
+                    <span class="live-badge">LIVE</span>
+                </div>
+                <div class="video-frame" id="videoFrame">
+                    <img src="/video_feed" alt="Live camera feed" id="videoImg">
+                    <div class="video-error">Camera feed unavailable. Check that the camera is connected and refresh the page.</div>
+                </div>
+            </section>
+
+            <section class="panel">
+                <div class="panel-head">
+                    <h3>Detected Students</h3>
+                </div>
+                <div class="summary">
+                    <div class="stat ok"><strong id="markedCount">0</strong><span>Marked</span></div>
+                    <div class="stat warn"><strong id="pendingCount">0</strong><span>Not marked</span></div>
+                </div>
+                <ul id="status-list"></ul>
+                <div class="panel-foot">
+                    <span class="conn-dot" id="connDot"></span>
+                    <span id="connText">Connecting...</span>
+                </div>
+            </section>
         </div>
-    </div>
+    </main>
 
     <script>
+        var list = document.getElementById("status-list");
+        var markedCount = document.getElementById("markedCount");
+        var pendingCount = document.getElementById("pendingCount");
+        var connDot = document.getElementById("connDot");
+        var connText = document.getElementById("connText");
+
+        document.getElementById("videoImg").addEventListener("error", function () {
+            document.getElementById("videoFrame").classList.add("failed");
+        });
+
+        function setConnection(online) {
+            connDot.className = "conn-dot" + (online ? "" : " offline");
+            connText.textContent = online
+                ? "Updated " + new Date().toLocaleTimeString()
+                : "Connection lost. Retrying...";
+        }
+
+        function renderEmpty() {
+            var li = document.createElement("li");
+            li.className = "empty";
+            li.style.display = "block";
+            li.textContent = "No students detected yet.";
+            list.appendChild(li);
+        }
+
+        function renderEntry(entry) {
+            var state = entry.marked ? "matched" : "unmatched";
+
+            var li = document.createElement("li");
+
+            var avatar = document.createElement("div");
+            avatar.className = "avatar " + state;
+            avatar.textContent = (entry.name || "?").charAt(0);
+
+            var person = document.createElement("div");
+            person.className = "person";
+            var name = document.createElement("div");
+            name.className = "name";
+            name.textContent = entry.name;
+            person.appendChild(name);
+
+            var badge = document.createElement("span");
+            badge.className = "badge " + state;
+            badge.textContent = entry.marked ? "Attendance marked" : "Not marked";
+
+            li.appendChild(avatar);
+            li.appendChild(person);
+            li.appendChild(badge);
+            list.appendChild(li);
+        }
+
         function refreshStatus() {
             fetch("/live_status")
-                .then(function(resp) { return resp.json(); })
-                .then(function(data) {
-                    var list = document.getElementById("status-list");
+                .then(function (resp) {
+                    if (!resp.ok) { throw new Error("Bad response"); }
+                    return resp.json();
+                })
+                .then(function (data) {
                     list.innerHTML = "";
-                    data.forEach(function(entry) {
-                        var li = document.createElement("li");
-                        if (entry.marked) {
-                            li.innerHTML = "&#10004; <span class='matched'>" + entry.name + "</span> — attendance marked";
-                        } else {
-                            li.innerHTML = "&#10008; <span class='unmatched'>" + entry.name + "</span> — not marked";
-                        }
-                        list.appendChild(li);
-                    });
+                    var marked = 0;
+
+                    if (data.length === 0) {
+                        renderEmpty();
+                    } else {
+                        data.forEach(function (entry) {
+                            if (entry.marked) { marked++; }
+                            renderEntry(entry);
+                        });
+                    }
+
+                    markedCount.textContent = marked;
+                    pendingCount.textContent = data.length - marked;
+                    setConnection(true);
+                })
+                .catch(function () {
+                    setConnection(false);
                 });
         }
 

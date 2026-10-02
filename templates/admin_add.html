@@ -3,23 +3,256 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Student</title>
+    <title>Add Student | Student Attendance</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --text: #0f172a;
+            --muted: #64748b;
+            --border: #cbd5e1;
+            --bg: #f1f5f9;
+            --bg-input: #f8fafc;
+            --error-bg: #fef2f2;
+            --error-text: #b91c1c;
+            --error-border: #fecaca;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .topbar {
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+            color: #fff;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+        }
+
+        .topbar h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.2px; }
+
+        .back-link {
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 14px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .back-link:hover { background: rgba(255, 255, 255, 0.15); }
+
+        .container {
+            max-width: 520px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: #fff;
+            padding: 36px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+        }
+
+        .card-header { margin-bottom: 28px; }
+        .card-header h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.2px; }
+        .card-header p { margin-top: 6px; font-size: 14px; color: var(--muted); }
+
+        .error {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--error-bg);
+            color: var(--error-text);
+            border: 1px solid var(--error-border);
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .field { margin-bottom: 20px; }
+
+        .field label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+        }
+
+        .field input[type="text"] {
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 15px;
+            color: var(--text);
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+        }
+
+        .field input[type="text"]:focus {
+            background: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+        }
+
+        .upload {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            background: var(--bg-input);
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .upload:hover,
+        .upload:focus-within { border-color: var(--primary); background: #eff6ff; }
+
+        .preview {
+            width: 72px;
+            height: 72px;
+            flex-shrink: 0;
+            border-radius: 12px;
+            background: #e2e8f0;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview svg { width: 28px; height: 28px; stroke: #94a3b8; }
+        .preview img { width: 100%; height: 100%; object-fit: cover; display: none; }
+
+        .upload-text strong { display: block; font-size: 14px; color: var(--text); }
+        .upload-text span { font-size: 12px; color: var(--muted); word-break: break-all; }
+
+        .upload input[type="file"] {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+        }
+
+        .hint { margin-top: 8px; font-size: 12px; color: var(--muted); }
+
+        .btn-submit {
+            width: 100%;
+            margin-top: 8px;
+            padding: 13px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #fff;
+            background: var(--primary);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+        }
+
+        .btn-submit:hover {
+            background: var(--primary-dark);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+        }
+
+        .btn-submit:active { transform: translateY(1px); }
+
+        @media (max-width: 480px) {
+            .card { padding: 28px 20px; }
+            .container { margin: 24px auto; }
+        }
+    </style>
 </head>
 <body>
-    <h1>Add New Student</h1>
-    <p><a href="/admin">Back to Dashboard</a></p>
-    <hr>
-    {% if error %}
-    <p style="color:red;">{{ error }}</p>
-    {% endif %}
-    <form method="POST" action="/admin/add" enctype="multipart/form-data">
-        <label>Name:</label><br>
-        <input type="text" name="name" required><br><br>
-        <label>Roll Number:</label><br>
-        <input type="text" name="roll_number" required><br><br>
-        <label>Photo:</label><br>
-        <input type="file" name="photo" accept="image/*" required><br><br>
-        <button type="submit">Enroll Student</button>
-    </form>
+    <header class="topbar">
+        <h1>Student Attendance</h1>
+        <a class="back-link" href="/admin">&larr; Back to Dashboard</a>
+    </header>
+
+    <main class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2>Add New Student</h2>
+                <p>Enter the student's details and upload a clear photo to enroll them.</p>
+            </div>
+
+            {% if error %}
+            <div class="error" role="alert">
+                <span>⚠</span>
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
+
+            <form method="POST" action="/admin/add" enctype="multipart/form-data">
+                <div class="field">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" placeholder="e.g. Ram Sharma" required autofocus>
+                </div>
+
+                <div class="field">
+                    <label for="roll_number">Roll Number</label>
+                    <input type="text" id="roll_number" name="roll_number" placeholder="e.g. 2025001" required>
+                </div>
+
+                <div class="field">
+                    <label for="photo">Photo</label>
+                    <label class="upload" for="photo">
+                        <div class="preview">
+                            <svg id="previewIcon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                <circle cx="12" cy="13" r="4"/>
+                            </svg>
+                            <img id="previewImg" alt="Selected photo preview">
+                        </div>
+                        <div class="upload-text">
+                            <strong>Choose a photo</strong>
+                            <span id="fileName">No file selected</span>
+                        </div>
+                        <input type="file" id="photo" name="photo" accept="image/*" required>
+                    </label>
+                    <p class="hint">Use a front-facing, well-lit photo with only one face visible.</p>
+                </div>
+
+                <button type="submit" class="btn-submit">Enroll Student</button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        const input = document.getElementById('photo');
+        const img = document.getElementById('previewImg');
+        const icon = document.getElementById('previewIcon');
+        const fileName = document.getElementById('fileName');
+
+        input.addEventListener('change', () => {
+            const file = input.files[0];
+            if (!file) {
+                img.style.display = 'none';
+                icon.style.display = 'block';
+                fileName.textContent = 'No file selected';
+                return;
+            }
+            fileName.textContent = file.name;
+            img.src = URL.createObjectURL(file);
+            img.style.display = 'block';
+            icon.style.display = 'none';
+        });
+    </script>
 </body>
 </html>

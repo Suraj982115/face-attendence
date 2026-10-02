@@ -3,97 +3,357 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Dashboard</title>
+    <title>Student Dashboard | Student Attendance</title>
     <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --text: #0f172a;
+            --muted: #64748b;
+            --border: #e2e8f0;
+            --bg: #f1f5f9;
+            --present-bg: #dcfce7;
+            --present-text: #15803d;
+            --absent-bg: #fee2e2;
+            --absent-text: #b91c1c;
+            --warn-bg: #fef3c7;
+            --warn-text: #b45309;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
-        h1, h2 { margin-bottom: 10px; color: #333; }
-        a { color: #1976d2; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        .card { background: #fff; padding: 20px; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .info-table td { padding: 8px 16px 8px 0; }
-        .controls { margin-bottom: 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-        .controls label { font-weight: 600; color: #555; }
-        .controls select { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
-        .controls button { padding: 6px 16px; background: #1976d2; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
-        .controls button:hover { background: #1565c0; }
-        .percentage { font-size: 18px; font-weight: 700; color: #2e7d32; margin-bottom: 16px; }
-        .register-wrap { overflow-x: auto; }
-        table.register { border-collapse: collapse; width: 100%; min-width: 700px; }
-        table.register th, table.register td { border: 1px solid #ddd; padding: 8px 6px; text-align: center; font-size: 13px; }
-        table.register th { background: #f0f0f0; font-weight: 700; color: #333; }
-        table.register td.present { background: #c8e6c9; color: #2e7d32; font-weight: 700; }
-        table.register td.absent { background: #ffcdd2; color: #c62828; font-weight: 700; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ---------- Top navigation ---------- */
+        .topbar { background: #1e3a8a; padding: 0 24px; }
+
+        .topbar-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            min-height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .brand { color: #fff; font-size: 17px; font-weight: 700; letter-spacing: -0.2px; }
+
+        .logout {
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 14px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .logout:hover { background: rgba(255, 255, 255, 0.15); }
+
+        /* ---------- Layout ---------- */
+        .container { max-width: 1100px; margin: 28px auto; padding: 0 20px; }
+
+        .page-title { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+        .page-sub { margin-top: 4px; margin-bottom: 20px; font-size: 14px; color: var(--muted); }
+
+        .panel {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .panel-head {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-head h3 { font-size: 15px; font-weight: 700; }
+
+        /* ---------- Profile ---------- */
+        .profile {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 24px 20px;
+            flex-wrap: wrap;
+        }
+
+        .photo {
+            width: 88px;
+            height: 88px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            object-fit: cover;
+            display: block;
+            box-shadow: 0 0 0 3px #fff, 0 0 0 4px var(--border);
+        }
+
+        .photo-empty {
+            width: 88px;
+            height: 88px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            background: #e2e8f0;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .profile-name { font-size: 20px; font-weight: 700; letter-spacing: -0.2px; margin-bottom: 10px; }
+
+        .meta { display: flex; flex-wrap: wrap; gap: 24px; }
+        .meta div span { display: block; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 3px; }
+        .meta div strong { font-size: 14px; }
+
+        .mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 13px;
+            background: #f1f5f9;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        /* ---------- Filter controls ---------- */
+        .controls {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .controls form { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+
+        .controls label { font-size: 13px; font-weight: 600; color: #334155; }
+
+        .controls select {
+            padding: 9px 12px;
+            font-size: 14px;
+            color: var(--text);
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .controls select:focus {
+            background: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+        }
+
+        .controls button {
+            padding: 9px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            background: var(--primary);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .controls button:hover { background: var(--primary-dark); }
+
+        /* ---------- Summary ---------- */
+        .summary {
+            display: grid;
+            grid-template-columns: 1.6fr 1fr 1fr;
+            gap: 16px;
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            background: #f8fafc;
+        }
+
+        .stat {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 16px;
+        }
+
+        .stat span.label { display: block; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+        .stat strong { display: block; font-size: 26px; line-height: 1.3; margin-top: 2px; }
+        .stat.ok strong { color: var(--present-text); }
+        .stat.bad strong { color: var(--absent-text); }
+
+        .bar {
+            height: 8px;
+            border-radius: 999px;
+            background: #e2e8f0;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .bar i { display: block; height: 100%; border-radius: 999px; background: var(--present-text); }
+        .bar.mid i { background: #d97706; }
+        .bar.low i { background: #dc2626; }
+
+        .pct-note { margin-top: 8px; font-size: 12px; color: var(--muted); }
+
+        /* ---------- Register ---------- */
+        .register-wrap { overflow-x: auto; padding: 20px; }
+
+        table.register { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 700px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+
+        table.register th,
+        table.register td {
+            padding: 10px 4px;
+            text-align: center;
+            font-size: 13px;
+            border-right: 1px solid var(--border);
+        }
+
+        table.register th {
+            background: #f8fafc;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            border-bottom: 1px solid var(--border);
+        }
+
+        table.register th:last-child,
+        table.register td:last-child { border-right: none; }
+
+        table.register td.present { background: var(--present-bg); color: var(--present-text); font-weight: 700; }
+        table.register td.absent { background: var(--absent-bg); color: var(--absent-text); font-weight: 700; }
+
+        .legend {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 0 20px 18px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .legend span { display: inline-flex; align-items: center; gap: 6px; }
+        .dot { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+        .dot.p { background: var(--present-bg); border: 1px solid #86efac; }
+        .dot.a { background: var(--absent-bg); border: 1px solid #fca5a5; }
+
+        @media (max-width: 700px) {
+            .summary { grid-template-columns: 1fr 1fr; }
+            .summary .stat:first-child { grid-column: 1 / -1; }
+            .container { margin: 20px auto; }
+        }
     </style>
 </head>
 <body>
-    <h1>Student Dashboard</h1>
-    <p><a href="/logout">Logout</a></p>
-    <hr style="margin: 10px 0 20px;">
+    {% set months = ["January","February","March","April","May","June","July","August","September","October","November","December"] %}
+    {% set pct = percentage|float %}
+    {% set days_present = register|select('equalto', 1)|list|length %}
+    {% set days_absent = register|length - days_present %}
 
-    <div class="card">
-        <h2>My Info</h2>
-        <table class="info-table">
-            <tr>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <span class="brand">Student Attendance</span>
+            <a href="/logout" class="logout">Logout</a>
+        </div>
+    </header>
+
+    <main class="container">
+        <h2 class="page-title">Student Dashboard</h2>
+        <p class="page-sub">Your profile and monthly attendance record.</p>
+
+        <section class="panel">
+            <div class="panel-head"><h3>My Info</h3></div>
+            <div class="profile">
                 {% if student.photo_url %}
-                <td><img src="{{ student.photo_url }}" alt="{{ student.name }}" width="80" height="80" style="object-fit:cover; border-radius: 50%;"></td>
+                <img class="photo" src="{{ student.photo_url }}" alt="{{ student.name }}">
                 {% else %}
-                <td>No photo</td>
+                <div class="photo-empty" title="No photo">{{ student.name[:1] }}</div>
                 {% endif %}
-                <td>
-                    <strong>Name:</strong> {{ student.name }}<br>
-                    <strong>Roll Number:</strong> {{ student.roll_number }}<br>
-                    <strong>ID:</strong> {{ student.id }}
-                </td>
-            </tr>
-        </table>
-    </div>
+                <div>
+                    <div class="profile-name">{{ student.name }}</div>
+                    <div class="meta">
+                        <div><span>Roll Number</span><strong class="mono">{{ student.roll_number }}</strong></div>
+                        <div><span>Student ID</span><strong>{{ student.id }}</strong></div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-    <div class="card">
-        <h2>Attendance Register</h2>
+        <section class="panel">
+            <div class="panel-head"><h3>Attendance Register</h3></div>
 
-        <div class="controls">
-            <form method="GET" action="/student" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-                <label>Month:</label>
-                <select name="month">
-                    {% for m in range(1, 13) %}
-                    <option value="{{ m }}" {% if m == view_month %}selected{% endif %}>
-                        {{ ["January","February","March","April","May","June","July","August","September","October","November","December"][m-1] }}
-                    </option>
-                    {% endfor %}
-                </select>
-                <label>Year:</label>
-                <select name="year">
-                    {% for y in range(now.year - 5, now.year + 2) %}
-                    <option value="{{ y }}" {% if y == view_year %}selected{% endif %}>
-                        {{ y }}
-                    </option>
-                    {% endfor %}
-                </select>
-                <button type="submit">View</button>
-            </form>
-        </div>
-
-        <p class="percentage">Monthly Attendance: {{ percentage }}%</p>
-
-        <div class="register-wrap">
-            <table class="register">
-                <thead>
-                    <tr>
-                        {% for d in range(1, days_in_month + 1) %}
-                        <th>{{ d }}</th>
+            <div class="controls">
+                <form method="GET" action="/student">
+                    <label for="month">Month</label>
+                    <select name="month" id="month">
+                        {% for m in range(1, 13) %}
+                        <option value="{{ m }}" {% if m == view_month %}selected{% endif %}>{{ months[m-1] }}</option>
                         {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        {% for val in register %}
-                        <td class="{{ 'present' if val == 1 else 'absent' }}">{{ val }}</td>
+                    </select>
+                    <label for="year">Year</label>
+                    <select name="year" id="year">
+                        {% for y in range(now.year - 5, now.year + 2) %}
+                        <option value="{{ y }}" {% if y == view_year %}selected{% endif %}>{{ y }}</option>
                         {% endfor %}
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+                    </select>
+                    <button type="submit">View</button>
+                </form>
+            </div>
+
+            <div class="summary">
+                <div class="stat">
+                    <span class="label">Attendance for {{ months[view_month - 1] }} {{ view_year }}</span>
+                    <strong>{{ percentage }}%</strong>
+                    <div class="bar {% if pct < 50 %}low{% elif pct < 75 %}mid{% endif %}">
+                        <i style="width: {{ [pct, 100]|min }}%;"></i>
+                    </div>
+                    {% if pct < 75 %}
+                    <p class="pct-note">Below 75%. Attendance may need improvement.</p>
+                    {% endif %}
+                </div>
+                <div class="stat ok">
+                    <span class="label">Days Present</span>
+                    <strong>{{ days_present }}</strong>
+                </div>
+                <div class="stat bad">
+                    <span class="label">Days Absent</span>
+                    <strong>{{ days_absent }}</strong>
+                </div>
+            </div>
+
+            <div class="register-wrap">
+                <table class="register">
+                    <thead>
+                        <tr>
+                            {% for d in range(1, days_in_month + 1) %}
+                            <th>{{ d }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            {% for val in register %}
+                            <td class="{{ 'present' if val == 1 else 'absent' }}">{{ '✓' if val == 1 else '✕' }}</td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="legend">
+                <span><i class="dot p"></i> Present</span>
+                <span><i class="dot a"></i> Absent</span>
+            </div>
+        </section>
+    </main>
 </body>
 </html>
