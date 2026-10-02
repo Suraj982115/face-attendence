@@ -1,5 +1,7 @@
 # backend.py - Admin and attendance operations tying together database, face, and dataset modules
 
+import calendar
+import hashlib
 import os
 import pickle
 import shutil
@@ -11,6 +13,10 @@ from database import get_connection
 from face_utils import KNOWN_FACES_FILE, build_known_faces, load_known_faces
 
 STATIC_PHOTOS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "photos")
+
+
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
 
 
 def enroll_student(name, roll_number, source_photo_path):
@@ -52,6 +58,18 @@ def enroll_student(name, roll_number, source_photo_path):
         )
         conn.commit()
         student_id = cursor.lastrowid
+
+        username = roll_number
+        password = hash_password("student123")
+        try:
+            cursor.execute(
+                "INSERT INTO users (username, password, role, student_id) VALUES (?, ?, ?, ?)",
+                (username, password, "student", student_id),
+            )
+            conn.commit()
+            print(f"Created login for '{name}' (username: {username}, password: student123)")
+        except Exception:
+            print(f"Username '{username}' already exists, skipping user creation.")
     except Exception as e:
         print(f"Error inserting student into database: {e}")
         if os.path.isfile(dest):
@@ -97,6 +115,8 @@ def remove_student_by_id(student_id):
             return False
 
         photo_path = row[0]
+        cursor.execute("DELETE FROM users WHERE student_id = ?", (student_id,))
+        cursor.execute("DELETE FROM attendance WHERE student_id = ?", (student_id,))
         cursor.execute("DELETE FROM students WHERE id = ?", (student_id,))
         conn.commit()
     except Exception as e:
@@ -273,3 +293,57 @@ def get_monthly_percentage(student_id, year, month):
 
     present_count = sum(1 for r in rows if r[0] == "present")
     return round(present_count / len(rows) * 100, 2)
+
+
+def get_attendance_register(year, month):
+    days_in_month = calendar.monthrange(year, month)[1]
+    month_prefix = f"{year}-{month:02d}-%"
+
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT id, name, roll_number FROM students ORDER BY id")
+        students = cursor.fetchall()
+
+        cursor.execute(
+            "SELECT student_id, date FROM attendance WHERE date LIKE ? AND status = 'present'",
+            (month_prefix,),
+        )
+        rows = cursor.fetchall()
+    except Exception as e:
+        print(f"Error fetching attendance register: {e}")
+        return [], [], []
+    finally:
+        if conn:
+            conn.close()
+
+    register = {}
+    for sid, name, roll in students:
+        register[sid] = {"name": name, "roll_number": roll, "days": {d: 0 for d in range(1, days_in_month + 1)}}
+
+    for sid, date_str in rows:
+        day = int(date_str.split("-")[2])
+        if sid in register:
+            register[sid]["days"][day] = 1
+
+    student_list = []
+    for sid in register:
+        student_list.append({
+            "id": sid,
+            "name": register[sid]["name"],
+            "roll_number": register[sid]["roll_number"],
+        })
+
+    day_totals = {d: 0 for d in range(1, days_in_month + 1)}
+    for sid in register:
+        for d in range(1, days_in_month + 1):
+            day_totals[d] += register[sid]["days"][d]
+
+    grid = []
+    for sid in register:
+        row = [register[sid]["days"][d] for d in range(1, days_in_month + 1)]
+        grid.append(row)
+
+    return student_list, grid, day_totals

@@ -21,9 +21,12 @@ def build_known_faces():
         if not os.path.isdir(student_dir):
             continue
 
+        IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff"}
         for filename in sorted(os.listdir(student_dir)):
             filepath = os.path.join(student_dir, filename)
             if not os.path.isfile(filepath):
+                continue
+            if os.path.splitext(filename)[1].lower() not in IMAGE_EXTS:
                 continue
 
             image = face_recognition.load_image_file(filepath)

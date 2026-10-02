@@ -1,5 +1,6 @@
 # app.py - Flask web application for the student attendance system
 
+import calendar
 import hashlib
 import os
 import tempfile
@@ -12,7 +13,7 @@ import face_recognition
 
 from flask import Flask, Response, jsonify, redirect, render_template, request, session, url_for
 
-from backend import enroll_student, get_monthly_percentage, mark_attendance, remove_student_by_id, update_student
+from backend import enroll_student, get_attendance_register, get_monthly_percentage, mark_attendance, remove_student_by_id, update_student
 from database import create_tables, get_connection
 from face_utils import load_known_faces, match_face
 
@@ -199,6 +200,34 @@ def admin_remove(student_id):
     return redirect(url_for("admin"))
 
 
+@app.route("/admin/attendance-register")
+@login_required("admin")
+def attendance_register():
+    now = datetime.now()
+    view_year = request.args.get("year", now.year, type=int)
+    view_month = request.args.get("month", now.month, type=int)
+
+    if view_month < 1 or view_month > 12:
+        view_month = now.month
+    if view_year < 2000 or view_year > 2100:
+        view_year = now.year
+
+    days_in_month = calendar.monthrange(view_year, view_month)[1]
+
+    students, grid, day_totals = get_attendance_register(view_year, view_month)
+
+    return render_template(
+        "attendance_register.html",
+        students=students,
+        grid=grid,
+        day_totals=day_totals,
+        days_in_month=days_in_month,
+        view_year=view_year,
+        view_month=view_month,
+        now=now,
+    )
+
+
 @app.route("/student")
 @login_required("student")
 def student():
@@ -248,6 +277,13 @@ def student():
     except Exception as e:
         pass
 
+    days_in_month = calendar.monthrange(view_year, view_month)[1]
+    student_register = [0] * days_in_month
+    for rec in records:
+        day = int(rec[0].split("-")[2])
+        if 1 <= day <= days_in_month and rec[2] == "present":
+            student_register[day - 1] = 1
+
     return render_template(
         "student_dashboard.html",
         student={"id": info[0], "name": info[1], "roll_number": info[2], "photo_url": photo_url},
@@ -256,6 +292,8 @@ def student():
         view_year=view_year,
         view_month=view_month,
         now=now,
+        register=student_register,
+        days_in_month=days_in_month,
     )
 
 
