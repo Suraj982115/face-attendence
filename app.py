@@ -13,7 +13,7 @@ import face_recognition  # for face encoding on cropped faces
 
 from flask import Flask, Response, jsonify, redirect, render_template, request, session, url_for  # web framework imports
 
-from backend import enroll_student, get_attendance_register, get_monthly_percentage, mark_attendance, remove_student_by_id, update_student  # backend operations
+from backend import RollNumberTakenError, enroll_student, get_attendance_register, get_monthly_percentage, mark_attendance, remove_student_by_id, update_student  # backend operations
 from database import create_tables, get_connection  # database helpers
 from face_utils import load_known_faces, match_face  # face recognition helpers
 
@@ -179,6 +179,8 @@ def admin_edit(student_id):
                 source_photo_path = tmp.name                   # set source path for backend
 
             result = update_student(student_id, name=name, roll_number=roll_number, source_photo_path=source_photo_path)  # update student
+        except RollNumberTakenError as e:
+            return render_template("admin_edit.html", student=student, error=str(e))
         except Exception as e:
             return render_template("admin_edit.html", student=student, error=f"Error updating student: {e}")
         finally:

@@ -5,6 +5,7 @@ import hashlib             # for SHA-256 password hashing
 import os                  # for file and path operations
 import pickle              # for serialising face encodings to disk
 import shutil              # for copying photo files
+import sqlite3             # for detecting UNIQUE constraint violations
 from datetime import datetime  # for current date/time
 
 import face_recognition    # for face detection and encoding
@@ -13,6 +14,12 @@ from database import get_connection  # DB connection helper
 from face_utils import KNOWN_FACES_FILE, build_known_faces, load_known_faces  # face data helpers
 
 STATIC_PHOTOS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "photos")  # directory for student photos
+
+
+class RollNumberTakenError(Exception):
+    def __init__(self, roll_number):
+        super().__init__(f"Roll number '{roll_number}' is already used as another student's login username. Please choose a different roll number.")
+        self.roll_number = roll_number  # remember the conflicting roll number
 
 
 def hash_password(password):
@@ -227,8 +234,20 @@ def update_student(student_id, name=None, roll_number=None, source_photo_path=No
             "UPDATE students SET name = ?, roll_number = ?, photo_path = ? WHERE id = ?",
             (new_name, new_roll, new_photo_path, student_id),  # update student record
         )
+        if new_roll != old_roll:                        # roll number changed - keep the login in sync
+            cursor.execute(
+                "UPDATE users SET username = ? WHERE student_id = ? AND role = 'student'",
+                (new_roll, student_id),                 # username tracks the roll number
+            )
+            if cursor.rowcount == 0:                    # no student login row linked to this student
+                print(f"No student login linked to id {student_id}; username left unchanged.")
         conn.commit()                                   # commit update
+    except sqlite3.IntegrityError:
+        conn.rollback()                                 # discard changes so nothing is half-saved
+        print(f"Roll number '{new_roll}' is already used as a login username.")
+        raise RollNumberTakenError(new_roll)            # let the caller show an accurate message
     except Exception as e:
+        conn.rollback()                                 # discard changes on any other failure
         print(f"Error updating student in database: {e}")
         return False
     finally:
